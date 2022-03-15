@@ -13,6 +13,14 @@
 
     <link rel="stylesheet" href="style.css" />
 
+    <!--IMPORTANT TO INPUT LEAFLET LIBRARY **BEFORE** OUR OWN SCRIPT so by the time our script loads, the browser must already have downloaded the leaflet library because otherwise our code will not be able to work without the library-->
+    <!--************************LEAFLET LIBRARY***********************************-->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A==" crossorigin="" />
+    <!--we need to use defer because the order in which the scripts are downloaded is very important-->
+    <script defer src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==" crossorigin=""></script>
+
+    <!--NOTE: we have access to the leaflet script because we have linked it BEFORE our script, but leaflet does not have access to anything from our script because our script appears afterwards and isn't loaded by the time leaflet is loaded -->
+    <!-- *******************OUR SCRIPT********************-->
     <script defer src="script.js"></script>
     <title>mapty // Map your workouts</title>
   </head>
