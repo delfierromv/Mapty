@@ -10,8 +10,57 @@ const inputDistance = document.querySelector('.form__input--distance');
 const inputDuration = document.querySelector('.form__input--duration');
 const inputCadence = document.querySelector('.form__input--cadence');
 const inputElevation = document.querySelector('.form__input--elevation');
-let map,mapEvent;
 
+class Workout{
+  //FIELDS:
+  //the date when each object is created
+  date = new Date();
+  //in the real world, we usually don't create IDs on our own and always use some kind of library in order to create good and unique ID numbers, but we will create our own for now
+  id = (Date.now() + '').slice(-10);
+
+  constructor(coords,distance,duration){
+    this.coords = coords; // [lat,lng]
+    this.distance = distance; //in km
+    this.duration = duration; // in min
+  }
+}
+
+class Running extends Workout{
+  constructor(coords,distance,duration,cadence){
+    super(coords,distance,duration);
+    this.cadence = cadence;
+    this.calcPace();
+  }
+
+  calcPace(){
+    //min/km
+    this.pace = this.duration/this.distance;
+    return this.pace;
+  }
+}
+
+class Cycling extends Workout{
+  constructor(coords,distance,duration,elevationGain){
+    super(coords,distance,duration);
+    this.elevationGain = elevationGain;
+    this.calcSpeed();
+  }
+
+  calcSpeed(){
+    //km/h
+    this.speed = this.distance/(this.duration/60);//divide duration by 60 since it is by hours not minutes
+    return this.speed; 
+  }
+}
+
+//experiements
+// const run1= new Running([39,-12],5.2,24,178);
+// const cycling1= new Cycling([39,-12],27,95,523);
+
+console.log(run1,cycling1);
+
+////////////////////////////////////////////////////////////////////////////////////
+//APPLICATION ARCHITECTURE
 class App {
   #map;
   #mapEvent;
@@ -20,7 +69,7 @@ class App {
     //we need to bind the this keyword because the eventlister will point to form instead of the app object.
     form.addEventListener('submit', this._newWorkout.bind(this));
   
-    inputType.addEventListener('change', this._toggleElevationField)  
+    inputType.addEventListener('change', this._toggleElevationField);  
   }
 
   _getPosition(){
@@ -46,12 +95,10 @@ class App {
     //whenever we use a third-party library, the first thing to do is to basically include it in our site 
 
     //copied from the leaflet website
-    console.log(this);
     this.#map = L.map('map').setView(coords, 13); // L is the namespace for Leaflet and we have access to it in this script because we have linked the leaflet script before ours and in that script L is basically a global variable inside the script of leaflet and L has a couple methods that we can use.  
     //second parameter is the zoom level, so 10 would be more zoomed out than 13 etc.
 
     //the map loads by tiles (one by one) and the appearance of the map can be customizable by themes... previously, the url was 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png' and the map looked different
-    console.log(map);
 
 
     L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
