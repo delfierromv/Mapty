@@ -3,13 +3,6 @@
 // prettier-ignore
 const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
-const form = document.querySelector('.form');
-const containerWorkouts = document.querySelector('.workouts');
-const inputType = document.querySelector('.form__input--type');
-const inputDistance = document.querySelector('.form__input--distance');
-const inputDuration = document.querySelector('.form__input--duration');
-const inputCadence = document.querySelector('.form__input--cadence');
-const inputElevation = document.querySelector('.form__input--elevation');
 
 class Workout{
   //FIELDS:
@@ -60,9 +53,19 @@ class Cycling extends Workout{
 
 ////////////////////////////////////////////////////////////////////////////////////
 //APPLICATION ARCHITECTURE
+const form = document.querySelector('.form');
+const containerWorkouts = document.querySelector('.workouts');
+const inputType = document.querySelector('.form__input--type');
+const inputDistance = document.querySelector('.form__input--distance');
+const inputDuration = document.querySelector('.form__input--duration');
+const inputCadence = document.querySelector('.form__input--cadence');
+const inputElevation = document.querySelector('.form__input--elevation');
+
 class App {
   #map;
   #mapEvent;
+  #workouts = [];
+
   constructor(){
     this._getPosition();
     //we need to bind the this keyword because the eventlister will point to form instead of the app object.
@@ -126,29 +129,68 @@ class App {
 
 
   _newWorkout(e){
-    e.preventDefault() 
+    e.preventDefault()
+    //HELPER FUNCTIONS
+    const validInputs = (...inputs) => inputs.every(inp => Number.isFinite(inp)); //this will loop over the array  and then each of them will check whether the number is finite or not and in the end the every method will only return true if this value here was true for all of them.
+
+    const allPositive = (...inputs)=> inputs.every(inp =>inp > 0)
+
+    //GET DATA FROM FORM///////////////
+    const type = inputType.value;
+    const distance = +inputDistance.value;// plus converts the string to a number
+    const duration = +inputDuration.value;
+    const {lat, lng} = this.#mapEvent.latlng;
+    let workout;
+
+    //IF WORKOUT IS RUNNING, CREATE RUNNING OBJECT///////////////
+    if(type === 'running'){
+      const cadence = +inputCadence.value
+      //CHECK IF DATA IS VALID///////////////
+      if(
+        // !Number.isFinite(distance) || !Number.isFinite(duration)|| !Number.isFinite(cadence)
+        !validInputs(distance, duration, cadence) || !allPositive(distance,duration,cadence)
+      ) 
+      return alert('Inputs have to be positive numbers')
+    }
+
+    workout = new Running([lat,lng], distance, duration, cadence);
+
+    //IF WORKOUT IS CYCLING, CREATE CYCLING OBJECT///////////////
+    if(type === 'cycling'){
+      const elevation = +inputElevation.value
+        //CHECK IF DATA IS VALID///////////////
+        if(
+          !validInputs(distance, duration, elevation) || !allPositive(distance,duration)
+        ) 
+        return alert('Inputs have to be positive numbers')
+    }
+
+    workout = new Cycling([lat,lng], distance, duration, elevation);
+    //ADD NEW OBJECT TO WORKOUT ARRAY///////////////
+    this.#workouts.push(workout);
+    //RENDER WORKOUT ON MAP AS MARKER///////////////
+  
+    //.marker() creates the marker
+    //.addTo() adds the marker to the app
+    //.bindPopup() create a pop up and bind it to the marker-- instead of inputting a simple string, you can also create a brand new popup object which will then contain a couple of options
+    //.openPopup()
+    L.marker([lat,lng]).addTo(this.#map)
+    .bindPopup(L.popup({
+      maxWidth:250,
+      minWidth: 100,
+      autoClose: false,
+      closeOnClick:false,
+      className: 'running-popup'
+    }))
+    .setPopupContent('Workout')
+    .openPopup();
+
+    //RENDER WORKOUT ON LIST///////////////
+
+    //HIDE FORM AND CLEAR INPUT FIELDS///////////////
+
       //Clear input fields
       inputDistance.value = inputDuration.value = inputCadence.value = inputElevation.value ='';
-  
-  
-      //display marker
-       //this function has access to mapEvent because it is a global variable.
-        const {lat, lng} = this.#mapEvent.latlng;
-  
-        //.marker() creates the marker
-        //.addTo() adds the marker to the app
-        //.bindPopup() create a pop up and bind it to the marker-- instead of inputting a simple string, you can also create a brand new popup object which will then contain a couple of options
-        //.openPopup()
-        L.marker([lat,lng]).addTo(this.#map)
-        .bindPopup(L.popup({
-          maxWidth:250,
-          minWidth: 100,
-          autoClose: false,
-          closeOnClick:false,
-          className: 'running-popup'
-        }))
-        .setPopupContent('Workout')
-        .openPopup();
   }
 }
 
