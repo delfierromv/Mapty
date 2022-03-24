@@ -7,6 +7,7 @@ class Workout{
   date = new Date();
   //in the real world, we usually don't create IDs on our own and always use some kind of library in order to create good and unique ID numbers, but we will create our own for now
   id = (Date.now() + '').slice(-10);
+  clicks =0;
 
   constructor(coords,distance,duration){
     this.coords = coords; // [lat,lng]
@@ -18,6 +19,9 @@ class Workout{
     const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
     this.description = `${this.type[0].toUpperCase()}${this.type.slice(1)} on ${months[this.date.getMonth()]} ${this.date.getDate()}`;
+  }
+  click(){
+    this.clicks++;
   }
 }
 
@@ -70,6 +74,7 @@ const inputElevation = document.querySelector('.form__input--elevation');
 
 class App {
   #map;
+  #mapZoomLevel=13;
   #mapEvent;
   #workouts = [];
 
@@ -79,6 +84,7 @@ class App {
     form.addEventListener('submit', this._newWorkout.bind(this));
   
     inputType.addEventListener('change', this._toggleElevationField);  
+    containerWorkouts.addEventListener('click', this._moveToPopup.bind(this))
   }
 
   _getPosition(){
@@ -104,7 +110,7 @@ class App {
     //whenever we use a third-party library, the first thing to do is to basically include it in our site 
 
     //copied from the leaflet website
-    this.#map = L.map('map').setView(coords, 13); // L is the namespace for Leaflet and we have access to it in this script because we have linked the leaflet script before ours and in that script L is basically a global variable inside the script of leaflet and L has a couple methods that we can use.  
+    this.#map = L.map('map').setView(coords, this.#mapZoomLevel); // L is the namespace for Leaflet and we have access to it in this script because we have linked the leaflet script before ours and in that script L is basically a global variable inside the script of leaflet and L has a couple methods that we can use.  
     //second parameter is the zoom level, so 10 would be more zoomed out than 13 etc.
 
     //the map loads by tiles (one by one) and the appearance of the map can be customizable by themes... previously, the url was 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png' and the map looked different
@@ -262,6 +268,28 @@ class App {
 
     form.insertAdjacentHTML('afterend',html);//this will basically add the new element at the end of the form.
   };
+
+  _moveToPopup(e){
+    const workoutEl = e.target.closest('.workout');//selecting the workout element
+    console.log(workoutEl);
+
+    //ignore null with guard clause
+    if(!workoutEl) return;
+
+    //finding the workout within the workout array
+    const workout = this.#workouts.find(work => work.id === workoutEl.dataset.id);
+    console.log(workout);
+
+    //moving the map to the coords of the workout clicked on
+    this.#map.setView(workout.coords, this.#mapZoomLevel,{
+      animate: true,//read documentation if you want to see all of your options for this method
+      pan:{
+        duration:1
+      }
+    });
+    //using the public interface
+    workout.click();
+  }
 }
 
 const app = new App();
