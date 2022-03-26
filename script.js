@@ -79,10 +79,15 @@ class App {
   #workouts = [];
 
   constructor(){
+    //GET USER'S POSITION
     this._getPosition();
+
+    //GET DATA FROM LOCAL STORAGE
+    this._getLocalStorage();
+
+    //ATTACH EVENT HANDLERS
     //we need to bind the this keyword because the eventlister will point to form instead of the app object.
     form.addEventListener('submit', this._newWorkout.bind(this));
-  
     inputType.addEventListener('change', this._toggleElevationField);  
     containerWorkouts.addEventListener('click', this._moveToPopup.bind(this))
   }
@@ -102,7 +107,7 @@ class App {
     const {latitude} = position.coords;
     const {longitude} = position.coords;
     // console.log(latitude,longitude);
-    console.log(`https://www.google.com/maps/@${latitude},${longitude}`);
+    // console.log(`https://www.google.com/maps/@${latitude},${longitude}`);
     
     const coords = [latitude, longitude] 
     //DISPLAYING A MAP USING LEAFLET LIBRARY--STEP 2 OF FLOWCHART?
@@ -125,6 +130,11 @@ class App {
     
     //Handling clicks on map
     this.#map.on('click', this._showForm.bind(this));
+
+    //render the markers
+    this.#workouts.forEach(work=>{
+      this._renderWorkoutMarker(work);
+    });
   };
   _showForm(mapE){this.#mapEvent = mapE;
     form.classList.remove('hidden');
@@ -190,7 +200,7 @@ class App {
     }
     //ADD NEW OBJECT TO WORKOUT ARRAY///////////////
     this.#workouts.push(workout);
-    console.log(workout);
+    // console.log(workout);
 
 
     //RENDER WORKOUT ON MAP AS MARKER///////////////
@@ -199,9 +209,10 @@ class App {
     this._renderWorkout(workout);
 
     //HIDE FORM AND CLEAR INPUT FIELDS///////////////
+    this._hideForm();
 
-      //Clear input fields
-      this._hideForm();
+    //Set local storage to all workouts
+    this._setLocalStorage();
       
   }
 
@@ -223,7 +234,7 @@ class App {
   }
 
   _renderWorkout(workout){
-    console.log(workout.type)
+    // console.log(workout.type)
     let html = `
     <li class="workout workout--${workout.type}" data-id="${workout.id}">
       <h2 class="workout__title">${workout.description}</h2>
@@ -271,14 +282,14 @@ class App {
 
   _moveToPopup(e){
     const workoutEl = e.target.closest('.workout');//selecting the workout element
-    console.log(workoutEl);
+    // console.log(workoutEl);
 
     //ignore null with guard clause
     if(!workoutEl) return;
 
     //finding the workout within the workout array
     const workout = this.#workouts.find(work => work.id === workoutEl.dataset.id);
-    console.log(workout);
+    // console.log(workout);
 
     //moving the map to the coords of the workout clicked on
     this.#map.setView(workout.coords, this.#mapZoomLevel,{
@@ -288,7 +299,33 @@ class App {
       }
     });
     //using the public interface
-    workout.click();
+    // workout.click();
+  }
+  _setLocalStorage(){
+    //We will use the local storage API which is an API that the browser provides for us
+    //local storage is a simple key value store..so needs a key and a value
+    //JSON.stringify() converts any object in javascript to a string
+    //local storage is only used for small amounts of data because storing large amount of data in local storage will slow down the application.
+    localStorage.setItem('workouts', JSON.stringify(this.#workouts))
+  }
+  _getLocalStorage(){
+    const data = JSON.parse(localStorage.getItem('workouts'));//converts the strings to objects
+    //a problem will arise with the click counter now since we converted the workout objects to strings and back again and are now just regular objects and not created from the running or cycling class so the objects will not inherit any of their methods. There is a way to restore it, however it is a lot of work so we will disable the click function as it was only set to show a problem with using local storage.
+    // console.log(data);
+
+    if(!data) return;
+
+    this.#workouts = data;
+    this.#workouts.forEach(work =>{
+      this._renderWorkout(work);
+      // this._renderWorkoutMarker(work)-----this doesn't work since _renderWorkoutMarker is executed immediately after the page loads so its trying to render the workout marker before the map is even loaded
+    }); //we use forEach since it doesn't return a new array
+  }
+  reset(){
+    localStorage.removeItem('workouts');
+    location.reload();//location is basically a big object that contains a lot of methods and properties in the browser and one of those methods is the ability to reload the page.
+
+    //go to the console and type in app.reset() and all the workouts will be deleted.
   }
 }
 
